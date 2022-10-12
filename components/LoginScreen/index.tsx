@@ -1,93 +1,50 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components/native";
-import { View, Text, TextInput, KeyboardAvoidingView, Dimensions, ToastAndroid } from "react-native";
+import { View, Text, TextInput, KeyboardAvoidingView, Dimensions, ToastAndroid, Image, Button, TouchableHighlight } from "react-native";
+import { AxiosHelper } from "../AxiosHelper";
+import { BASE_URL, LOGIN } from "../ApiUrl";
+import axios from "axios"
 
-export type LoginScreenProps = {
-
+export type StyledComponents = {
+  width?: number,
+  height?: number,
 }
-
-const LoginScreenWrapper = styled(View)`
-    height          : ${props => props.height + "px"};
-    display         : flex;
-    align-items     : center;
-    justify-content : center;
-    background-color: #2A719D;
-    position        : relative;
-`;
-
-const LoginBgImage = styled(View)`
-    position: absolute; 
-`;
-
-const LoginFormWrapper = styled(View)`
-    padding         : 20px 30px 15px 30px;
-    width           : ${props => (props.width - 26) + "px"};
-    background-color: white;
-    border-radius   : 30px;
-`;
-
-const LoginHeaderWrapper = styled(View)`
-    margin-bottom: 25px;
-`;
-
-const LoginHeader = styled(Text)`
-    color       : #329FD9;
-    font-size   : 48px;
-    font-family : "NunitoBlack";
-    text-align: center;
-`;
-
-const LoginDescription = styled(Text)`
-    color: #4ACAF9;
-    text-align: center;
-    font-family: "NunitoMedium";
-`;
-
-const LoginTextInput = styled(TextInput)`
-    background-color: white;
-    color           : #3F3F3F;
-    position        : relative;
-    font-family     : "NunitoBold";
-    padding         : 4px 10px;
-    font-size: 18px;
-    border: none;
-    border-bottom-width: 1.5px;
-    border-bottom-color: #8C8B8B;
-    border-radius   : 10px;
-`;
-
-const LoginLabel = styled(Text)`
-    font-size       : 18px;
-    margin-bottom   : 5px;
-    color           : black;
-    font-family     : "NunitoSemiBold";
-`;
-
-const ForgetPassword = styled(Text)`
-    font-family     : "NunitoMediumItalic";
-    color           : #37B4F3;
-    text-decoration : underline;
-    text-align      : right;
-`;
-
-const CreateNewAccount = styled(Text)`
-    font-family     : "NunitoSemiBold";
-    color           : #37B4F3;
-    text-align      : center;
-    font-size       : 15px;
-`;
 
 export type LoginProps = {
   
 };
 
+const LoginWrapper = styled(View)`
+  width: ${(props: StyledComponents) => props.width}px;
+  height: ${(props: StyledComponents) => props.height}px;
+  background-color: #008274;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  position        : relative;
+`;
+
+const LoginContainer = styled(View)`
+  padding: 30px;
+  background-color: #e0e0e0b5;
+  border-radius: 10px;
+  width: ${(props: StyledComponents) => props.width-40}px;
+`;
+
+const CustomInput = styled(TextInput)`
+	height: 50px;
+	background-color: white;
+	border-radius: 10px;
+	padding: 0 20px;
+	color: black;
+`;
+
 const LoginScreen: React.FC = (props: LoginProps) => {
     const {width, height}           = Dimensions.get("window");
-    const [username, setUsername]   = useState(__DEV__ ? "daumoe" : "");
-    const [password, setPassword]   = useState(__DEV__ ? "123" : "");
-    const [showPass, setPlainPass]  = useState(false);
+    const [username, setUsername]   = useState<string>(__DEV__ ? "4503" : "");
+    const [password, setPassword]   = useState<string>(__DEV__ ? "111111" : "");
 
-    const Authenticate = function() {
+    const Login = async function() {
       if (username.trim() === "") {
         ToastAndroid.show("Enter your username or email", ToastAndroid.SHORT);
         return;
@@ -96,14 +53,56 @@ const LoginScreen: React.FC = (props: LoginProps) => {
         ToastAndroid.show("Password is required", ToastAndroid.SHORT);
         return;
       }
+      AxiosHelper(LOGIN, "post", {username, password})
+        .then(r => {
+          console.log(r.data.data);
+        })
+        .catch(e => {
+          console.error("LOGIN:", e.response.data);
+        })
     }
 
-    useEffect(function() {
-      
-    });
-
     return(
-      <></>
+      <KeyboardAvoidingView>
+        <LoginWrapper width={width} height={height}>
+          <LoginContainer width={width}>
+            <Image source={{uri: 'http://123.31.17.35:8033/static/media/HiMeDic-logo-1.23584bbb.png'}} style={{width: '100%', height: 100, resizeMode: "contain"}}/>
+            <View style={{marginTop: 20}}>
+              <CustomInput 
+                defaultValue={username}
+                onChangeText={(e:string) => setUsername(e)}
+                placeholderTextColor={"#6e6e6e"} 
+                placeholder={"Mã tra cứu"}
+              />
+            </View>
+            <View style={{marginTop: 15}}>
+              <CustomInput
+                defaultValue={username}
+                onChangeText={(e:string) => setPassword(e)}
+                placeholderTextColor={"#6e6e6e"} 
+                placeholder={"Mật khẩu"} 
+                secureTextEntry
+              />
+            </View>
+            <View style={{marginTop: 25}}>
+              <TouchableHighlight
+                activeOpacity={0.6}
+                underlayColor="#ffffff"
+                onPress={Login}
+              >
+                <View style={{
+                  borderRadius: 10,
+                  alignItems: "center",
+                  backgroundColor: "#0474b4",
+                  padding: 12
+                }}>
+                  <Text style={{fontSize: 16, color: 'white'}}>Đăng nhập</Text>
+                </View>
+              </TouchableHighlight>
+            </View>
+          </LoginContainer>
+        </LoginWrapper>
+      </KeyboardAvoidingView>
     );
 };
 

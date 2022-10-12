@@ -30,7 +30,7 @@ const db = openDatabase({name: DB_FILE_NAME, location: "default"}, OpenDBSuccess
     });
 })();
 
-export const SaveToken = function(token) {
+export const SaveToken = function(token: string) {
 	const SQL = `DELETE FROM ${TOKEN_TABLE}`;
 	return new Promise(function (resolve, reject) {
 		db.transaction(function(tx) {

@@ -60,20 +60,25 @@ const LoginScreen: React.FC = (props: LoginProps) => {
       }
       AxiosHelper(LOGIN, "post", {username, password})
         .then(r => {
-          const responseData = r.data.data;
-          // console.log(r.data.data);
-          SaveToken(JSON.stringify(responseData))
+          const responseData = r.data;
+          // console.log(responseData);
+          SaveToken(JSON.stringify(responseData.data))
             .then(r => {
-              setToken(responseData);
-              navigation.navigate(RESULT_SCREEN);
+              if (responseData.success) {
+                setToken(responseData.data);
+                navigation.navigate(RESULT_SCREEN);
+              } else {
+                ToastAndroid.show(responseData.message, ToastAndroid.LONG);
+              }
             })
             .catch(e => {
               ToastAndroid.show("Saving token ERROR", ToastAndroid.LONG);
-              console.error("SAVE TOKEN:", e.message);
+              __DEV__ ? console.error("SAVE TOKEN:", e.message) : undefined;
             })
         })
         .catch(e => {
-          console.error("LOGIN:", e.response.data);
+          ToastAndroid.show(e.response.data, ToastAndroid.LONG);
+          __DEV__ ? console.error("LOGIN:", e.response.data) : undefined;
         })
     }
 
@@ -81,7 +86,7 @@ const LoginScreen: React.FC = (props: LoginProps) => {
       <KeyboardAvoidingView>
         <LoginWrapper width={width} height={height}>
           <LoginContainer width={width}>
-            <Image source={{uri: 'http://123.31.17.35:8033/static/media/HiMeDic-logo-1.23584bbb.png'}} style={{width: '100%', height: 100, resizeMode: "contain"}}/>
+            <Image source={require('./logo.png')} style={{width: '100%', height: 100, resizeMode: "contain"}}/>
             <View style={{marginTop: 20}}>
               <CustomInput 
                 defaultValue={username}
@@ -92,7 +97,7 @@ const LoginScreen: React.FC = (props: LoginProps) => {
             </View>
             <View style={{marginTop: 15}}>
               <CustomInput
-                defaultValue={username}
+                defaultValue={password}
                 onChangeText={(e:string) => setPassword(e)}
                 placeholderTextColor={"#6e6e6e"} 
                 placeholder={"Mật khẩu"} 
@@ -102,7 +107,7 @@ const LoginScreen: React.FC = (props: LoginProps) => {
             <View style={{marginTop: 25}}>
               <TouchableHighlight
                 activeOpacity={0.6}
-                underlayColor="#ffffff"
+                underlayColor="#ffffff0"
                 onPress={Login}
               >
                 <View style={{

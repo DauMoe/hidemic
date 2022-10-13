@@ -46,7 +46,7 @@ const LoadingScreen: React.FC = () => {
         padding: 15,
         borderRadius: 10
       }}>
-        <Image source={{uri: 'http://123.31.17.35:8033/static/media/HiMeDic-logo-1.23584bbb.png'}} style={{width: '100%', height: 100, resizeMode: "contain"}}/>
+        <Image source={require('./../LoginScreen/logo.png')} style={{width: '100%', height: 100, resizeMode: "contain"}}/>
       </View>
     </LoadingWrapper>
   );

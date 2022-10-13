@@ -13,3 +13,12 @@ export const HOST_TABLE: string            = "host";
 export const HOST_TB_ID: string            = "host_id";
 export const HOST_TB_VALUE: string         = "host_value";
 export const HOST_TB_CREATE_AT: string     = "host_create_at";
+
+
+/**
+ * Screen Definition
+ */
+export const LOGIN_SCREEN: string           = "LoginScreen";
+export const LOADING_SCREEN: string         = "LoadingScreen";
+export const RESULT_SCREEN: string          = "ResultScreen";
+export const DETAIL_SCREEN: string          = "DetailScreen";

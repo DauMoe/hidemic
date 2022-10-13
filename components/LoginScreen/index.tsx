@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components/native";
 import { View, Text, TextInput, KeyboardAvoidingView, Dimensions, ToastAndroid, Image, Button, TouchableHighlight } from "react-native";
 import { AxiosHelper } from "../AxiosHelper";
-import { BASE_URL, LOGIN } from "../ApiUrl";
-import axios from "axios"
+import { LOGIN } from "../ApiUrl";
+import { useNavigation } from "@react-navigation/native";
+import { RESULT_SCREEN } from "../Constant";
+import { SaveToken } from "../SqlLiteHelper";
 
 export type StyledComponents = {
   width?: number,
@@ -28,7 +30,7 @@ const LoginContainer = styled(View)`
   padding: 30px;
   background-color: #e0e0e0b5;
   border-radius: 10px;
-  width: ${(props: StyledComponents) => props.width-40}px;
+  width: ${(props: StyledComponents) => props.width ? (props.width-40) : (250-40)}px;
 `;
 
 const CustomInput = styled(TextInput)`
@@ -41,6 +43,7 @@ const CustomInput = styled(TextInput)`
 
 const LoginScreen: React.FC = (props: LoginProps) => {
     const {width, height}           = Dimensions.get("window");
+    const navigation                = useNavigation();
     const [username, setUsername]   = useState<string>(__DEV__ ? "4503" : "");
     const [password, setPassword]   = useState<string>(__DEV__ ? "111111" : "");
 
@@ -55,7 +58,16 @@ const LoginScreen: React.FC = (props: LoginProps) => {
       }
       AxiosHelper(LOGIN, "post", {username, password})
         .then(r => {
-          console.log(r.data.data);
+          const responseData = r.data.data;
+          // console.log(r.data.data);
+          SaveToken(JSON.stringify(responseData))
+            .then(r => {
+              navigation.navigate(RESULT_SCREEN);
+            })
+            .catch(e => {
+              ToastAndroid.show("Saving token ERROR", ToastAndroid.LONG);
+              console.error("SAVE TOKEN:", e.message);
+            })
         })
         .catch(e => {
           console.error("LOGIN:", e.response.data);
@@ -106,4 +118,6 @@ const LoginScreen: React.FC = (props: LoginProps) => {
     );
 };
 
-export default LoginScreen;
+export default React.memo(LoginScreen, (prevProps, nextProps) => {
+  return true;
+});

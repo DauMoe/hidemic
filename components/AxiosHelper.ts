@@ -10,17 +10,17 @@ let TOKEN: any;
 (function() {
 	if (!TOKEN) {
 		LoadToken()
-		.then(r => {
-			console.log(r);
-			TOKEN = r;
-		})
-		.catch(e => console.error("Load token fail"));
+			.then(r => {
+				console.log(r);
+				TOKEN = r;
+			})
+			.catch(e => console.error("Load token fail"));
 	}
 })();
 
-export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, config: any | undefined) {
+export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, config?: any) {
 	const instance = axios.create({
-			baseURL: BASE_URL
+		baseURL: BASE_URL
 	});
 	// instance.interceptors.response.use(response => {
 	//    const { code, data } = response.data;
@@ -32,15 +32,14 @@ export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, conf
 
 	if (TOKEN && TOKEN !== "") instance.defaults.headers.common['Authorization'] = `Bearer ${TOKEN}`;
 	switch(method.toUpperCase()) {
-		case "GET":
-			return instance.get(endpoint, config);
 		case "POST":
 			return instance.post(endpoint, config);
 		case "PUT":
 			return instance.put(endpoint, config);
 		case "DELETE":
 			return instance.delete(endpoint, config);
+		case "GET":
 		default:
-			return new Error(`Method '${method}' is not supported!`);
+			return instance.get(endpoint, config);
 	}
 }

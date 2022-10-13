@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useContext, useEffect, useState } from "react";
-import { Dimensions, TouchableHighlight, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Text } from 'react-native';
 import { TokenContext } from "../GlobalContext";
@@ -128,6 +128,7 @@ const DetailScreen = () => {
   const route                     = useRoute();
   const { patientId }             = route.params;
   const { authorized, setToken }  = useContext(TokenContext);
+  const [loading, setLoading]     = useState(true);
   const [lisData, setLis]         = useState({
     profile : {},
     lis: []
@@ -135,15 +136,19 @@ const DetailScreen = () => {
   const [activeSec, setActive] = useState([]);
 
   useEffect(() => {
+    const controller1 = new AbortController();
+    const controller2 = new AbortController();
     const profile = AxiosHelper(`${DETAILS}/${patientId}`, "get", {
       headers: {
         'Authorization': `Bearer ${authorized.token}`
-      }
+      },
+      signal: controller1.signal
     });
     const lis = AxiosHelper(`${LIS}/${patientId}`, "get", {
       headers: {
         'Authorization': `Bearer ${authorized.token}`
-      }
+      },
+      signal: controller1.signal
     });
     
     Promise.all([profile, lis])
@@ -176,12 +181,19 @@ const DetailScreen = () => {
           console.error("DETAIL:", e.response);
         }
       })
+      .finally(() => {
+        setLoading(false);
+      });
+      return(() => {
+        controller1.abort();
+        controller2.abort();
+      })
   }, []);
 
-  const _renderSectionTitle = (section: any) => {
+  const _renderSectionTitle = (section: any, index: number) => {
     return (
       <View>
-        <LisHeader>{section.testtypeName}</LisHeader>
+        <LisHeader>{index+1}. {section.testtypeName}</LisHeader>
       </View>
     );
   }
@@ -211,6 +223,20 @@ const DetailScreen = () => {
     setActive(activeSection);
   }
 
+  if (loading) {
+    return(
+      <View style={{
+        height: height,
+        width: width,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <ActivityIndicator size="large" color="#00ff00" />
+      </View>
+    )
+  }
+
   return(
     <View style={{padding: 20, display: 'flex', height: height}}>
       <View style={{marginBottom: 20}}>
@@ -230,6 +256,8 @@ const DetailScreen = () => {
           renderHeader={_renderSectionTitle}
           renderContent={_renderSectionContent}
           onChange={_updateSection}
+          underlayColor={'#7bffde'}
+          expandMultiple
         />
       </ScrollView>
     </View>

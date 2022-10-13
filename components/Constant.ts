@@ -22,3 +22,4 @@ export const LOGIN_SCREEN: string           = "LoginScreen";
 export const LOADING_SCREEN: string         = "LoadingScreen";
 export const RESULT_SCREEN: string          = "ResultScreen";
 export const DETAIL_SCREEN: string          = "DetailScreen";
+export const CHANGE_PASSWORD_SCREEN: string = "ChangePasswordScreen";

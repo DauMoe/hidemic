@@ -58,3 +58,16 @@ export const LoadToken = function() {
 		});
 	});
 }
+
+export const ClearToken = function() {
+	const SQL = `DELETE FROM ${TOKEN_TABLE}`;
+	return new Promise(function (resolve, reject) {
+		db.transaction(function(tx: any) {
+			tx.executeSql(SQL, [], function(tx: any, result: any) {
+				resolve(result);
+			}, function(tx: any, error: any) {
+				reject(error);
+			});
+		});
+	});
+}

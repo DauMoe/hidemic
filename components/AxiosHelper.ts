@@ -18,10 +18,14 @@ let TOKEN: any;
 	}
 })();
 
-export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, config?: any) {
+export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, data?: any, config?: any) {
 	const instance = axios.create({
 		baseURL: BASE_URL
 	});
+	// instance.interceptors.request.use(request => {
+	// 	console.log("R:", request.data);
+	// 	return request;
+	// });
 	// instance.interceptors.response.use(response => {
 	//    const { code, data } = response.data;
 	//    if (code === 401) {
@@ -33,13 +37,13 @@ export const AxiosHelper = function(endpoint: string, method: AXIOS_METHOD, conf
 	if (TOKEN && TOKEN !== "") instance.defaults.headers.common['Authorization'] = `Bearer ${TOKEN}`;
 	switch(method.toUpperCase()) {
 		case "POST":
-			return instance.post(endpoint, config);
+			return instance.post(endpoint,  data, config);
 		case "PUT":
-			return instance.put(endpoint, config);
+			return instance.put(endpoint, data, config);
 		case "DELETE":
 			return instance.delete(endpoint, config);
 		case "GET":
 		default:
-			return instance.get(endpoint, config);
+			return instance.get(endpoint, data);
 	}
 }

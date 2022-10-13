@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components/native";
 import { View, Text, TextInput, KeyboardAvoidingView, Dimensions, ToastAndroid, Image, Button, TouchableHighlight } from "react-native";
 import { AxiosHelper } from "../AxiosHelper";
@@ -6,6 +6,7 @@ import { LOGIN } from "../ApiUrl";
 import { useNavigation } from "@react-navigation/native";
 import { RESULT_SCREEN } from "../Constant";
 import { SaveToken } from "../SqlLiteHelper";
+import { TokenContext } from "../GlobalContext";
 
 export type StyledComponents = {
   width?: number,
@@ -44,6 +45,7 @@ const CustomInput = styled(TextInput)`
 const LoginScreen: React.FC = (props: LoginProps) => {
     const {width, height}           = Dimensions.get("window");
     const navigation                = useNavigation();
+    const { setToken }              = useContext(TokenContext);
     const [username, setUsername]   = useState<string>(__DEV__ ? "4503" : "");
     const [password, setPassword]   = useState<string>(__DEV__ ? "111111" : "");
 
@@ -62,6 +64,7 @@ const LoginScreen: React.FC = (props: LoginProps) => {
           // console.log(r.data.data);
           SaveToken(JSON.stringify(responseData))
             .then(r => {
+              setToken(responseData);
               navigation.navigate(RESULT_SCREEN);
             })
             .catch(e => {

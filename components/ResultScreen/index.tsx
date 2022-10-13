@@ -2,17 +2,21 @@ import React from "react";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useContext } from "react";
-import { ScrollView, Text, TouchableHighlight, View } from "react-native";
+import { Dimensions, ScrollView, Text, TouchableHighlight, View } from "react-native";
 import { DETAILS, DETALLS } from "../ApiUrl";
 import { AxiosHelper } from "../AxiosHelper";
 import { TokenContext } from "../GlobalContext";
 import styled from 'styled-components/native';
 import moment from "moment";
 import { useNavigation } from "@react-navigation/native";
-import { DETAIL_SCREEN } from "../Constant";
+import { CHANGE_PASSWORD_SCREEN, DETAIL_SCREEN, LOGIN_SCREEN } from "../Constant";
+import { StyledComponents } from "../LoginScreen";
+import { ClearToken } from "../SqlLiteHelper";
 
 const ResultWrapper = styled(View)`
-  margin: 20px;
+  padding: 20px;
+  height: ${(props: StyledComponents) => props.height}px;
+  display: flex;
 `;
 
 const ResultHeader = styled(Text)`
@@ -74,6 +78,7 @@ export type PatientData = {
 }
 
 const ResultScreen: React.FC = () => {
+  const { width, height }         = Dimensions.get("window");
   const { authorized, setToken }  = useContext(TokenContext);
   const [result, setResult]       = useState([]);
   const navigation                = useNavigation();
@@ -93,6 +98,23 @@ const ResultScreen: React.FC = () => {
       })
   }, []);
 
+  const Logout = () => {
+    ClearToken()
+      .catch(e => {
+        console.log("LOGOUT:", e.message)
+      })
+      .finally(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{name: LOGIN_SCREEN}]
+        });
+      });
+  }
+
+  const Go2ChangePassword = () => {
+    navigation.navigate(CHANGE_PASSWORD_SCREEN);
+  }
+
   const GetDetail = (patientId: number) => {
     navigation.navigate(DETAIL_SCREEN, {
       patientId: patientId
@@ -100,9 +122,9 @@ const ResultScreen: React.FC = () => {
   }
 
   return(
-    <ResultWrapper>
-      <ScrollView style={{height: '100%', width: '100%'}}>
-        <ResultHeader>Kết quả xét nghiệm bệnh nhân</ResultHeader>
+    <ResultWrapper height={height}>
+      <ResultHeader>Kết quả xét nghiệm bệnh nhân</ResultHeader>
+      <ScrollView style={{height: '100%', width: '100%', flex: 1}}>
         <View style={{marginTop: 20}}>
           {result.map((item: PatientData, index: number) => {
             return(
@@ -155,6 +177,41 @@ const ResultScreen: React.FC = () => {
           })}
         </View>
       </ScrollView>
+      <TouchableHighlight
+        activeOpacity={0.6}
+        underlayColor="#ffffff"
+        onPress={Go2ChangePassword}
+      >
+        <View style={{
+          backgroundColor: '#00bd9d',
+          padding: 12,
+          borderRadius: 10
+        }}>
+          <Text style={{
+            color: 'white',
+            fontSize: 15,
+            textAlign: 'center'
+          }}>Đổi mật khẩu</Text>
+        </View>
+      </TouchableHighlight>
+      <TouchableHighlight
+        style={{marginTop: 5}}
+        activeOpacity={0.6}
+        underlayColor="#ffffff"
+        onPress={Logout}
+      >
+        <View style={{
+          backgroundColor: '#af0075',
+          padding: 12,
+          borderRadius: 10
+        }}>
+          <Text style={{
+            color: 'white',
+            fontSize: 15,
+            textAlign: 'center'
+          }}>Đăng xuất</Text>
+        </View>
+      </TouchableHighlight>
     </ResultWrapper>
   )
 }

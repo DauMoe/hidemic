@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useContext, useEffect, useState } from "react";
-import { Dimensions, ActivityIndicator, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ActivityIndicator, TouchableOpacity, View, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Text } from 'react-native';
 import { TokenContext } from "../GlobalContext";
@@ -9,9 +9,10 @@ import { DETAILS, LIS } from "../ApiUrl";
 import styled from 'styled-components/native';
 import { ScrollView } from 'react-native';
 import moment from "moment";
-import { Table, Row, Rows } from 'react-native-table-component';
+import { Table, Row, Rows, Cell, TableWrapper } from 'react-native-table-component';
 import Accordion from 'react-native-collapsible/Accordion';
 import { PatientData } from ".";
+import RangeValues from "./DetectHigherValue";
 
 const DetailHeader = styled(Text)`
   color: black;
@@ -49,7 +50,7 @@ const PatientInfo = ({patientData}) => {
   const InfoContainer = styled(View)`
     border-width: 1px;
     border-color: #167c74;
-    padding: 10px;
+    padding: 5px;
     border-radius: 10px;
   `;
 
@@ -61,18 +62,18 @@ const PatientInfo = ({patientData}) => {
 
   const InfoHeader = styled(Text)`
     font-weight: 700;
-    font-size: 15px;
+    font-size: 12px;
     color: black;
   `;
 
   const InfoContent = styled(Text)`
-    font-size: 14px;
+    font-size: 12px;
     color: black;
     padding-left: 10px;
   `;
 
   return(
-    <View style={{marginTop: 20}}>
+    <View>
       <InfoContainer>
         <InfoWrapper>
           <InfoHeader>Tên bệnh nhân:</InfoHeader>
@@ -122,6 +123,22 @@ const PatientInfo = ({patientData}) => {
   )
 }
 
+const _TABLE_HEADER = {
+  item: ['TÊN XÉT NGHIỆM', 'KẾT QUẢ', 'ĐƠN VỊ', 'GIÁ TRỊ THAM CHIẾU', 'THIẾT BỊ'],
+  widthArr: [250, 100, 100, 100, 100]
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff' },
+  head: { backgroundColor: '#ffffff' },
+  headText: { margin: 3, color: '#000', fontWeight: '900', paddingLeft: 10 },
+  testNameWrapper: {backgroundColor: '#dddddd'},
+  testNameText: { color: 'blue', margin: 6, fontWeight: '900', paddingLeft: 10 },
+  text: { margin: 10, color: '#000', paddingLeft: 10 },
+  dataWrapper: { marginTop: -1 },
+  row: { backgroundColor: '#ffffff', flexDirection: 'row' }
+});
+
 const DetailScreen = () => {
   const { width, height }         = Dimensions.get("window");
   const navigation                = useNavigation();
@@ -133,7 +150,6 @@ const DetailScreen = () => {
     profile : {},
     lis: []
   });
-  const [activeSec, setActive] = useState([]);
 
   useEffect(() => {
     const controller1 = new AbortController();
@@ -163,10 +179,10 @@ const DetailScreen = () => {
             listTesttypeName.push(_item.testtypeName);
             _lisData.push({
               testtypeName: _item.testtypeName,
-              childrens   : [_item]
+              childrens   : [[_item.testName, _item.result, _item.measureUnit, _item.normalLevel, _item.deviceName]]
             })
           } else {
-            _lisData[_index].childrens.push(_item);
+            _lisData[_index].childrens.push([_item.testName, _item.result, _item.measureUnit, _item.normalLevel, _item.deviceName]);
           }
         }
         setLis({
@@ -189,39 +205,6 @@ const DetailScreen = () => {
         controller2.abort();
       })
   }, []);
-
-  const _renderSectionTitle = (section: any, index: number) => {
-    return (
-      <View>
-        <LisHeader>{index+1}. {section.testtypeName}</LisHeader>
-      </View>
-    );
-  }
-
-  const _renderSectionContent = (section: any) => {
-    const content = section.childrens;
-    return (
-      <View>
-        {content.map((item: any, index: number) => {
-          return(
-            <View key={"_TEST_" + index} style={{marginLeft: 7}}>
-              <TestName>- {item.testName}</TestName>
-              <View style={{marginLeft: 18}}>
-                <TestValue>Kết quả: {item.result}</TestValue>
-                <TestValue>Đơn vị: {item.measureUnit}</TestValue>
-                <TestValue>Giá trị tham chiếu: {item.normalLevel}</TestValue>
-                <TestValue>Thiết bị: {item.deviceName ? item.deviceName : '<Không có thông tin>'}</TestValue>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    );
-  }
-
-  const _updateSection = (activeSection: any) => {
-    setActive(activeSection);
-  }
 
   if (loading) {
     return(
@@ -248,17 +231,44 @@ const DetailScreen = () => {
         <DetailHeader>Kết quả xét nghiệm</DetailHeader>
         <DetailSub>Ngày {moment(lisData.profile.inputDate).format("DD/MM/YYYY HH:mm:ss")}</DetailSub>
       </View>
-      <ScrollView style={{flex: 5}}>
-        <PatientInfo patientData={lisData.profile}/>
-        <Accordion
-          sections={lisData.lis}
-          activeSections={activeSec}
-          renderHeader={_renderSectionTitle}
-          renderContent={_renderSectionContent}
-          onChange={_updateSection}
-          underlayColor={'#7bffde'}
-          expandMultiple
-        />
+      <PatientInfo patientData={lisData.profile}/>
+      <ScrollView style={{height: '100%', width: '100%', flex: 1, paddingTop: 10}} horizontal>
+        <View>
+          <Table borderStyle={{borderWidth: 1, borderColor: '#868686'}}>
+            <Row data={_TABLE_HEADER.item} widthArr={_TABLE_HEADER.widthArr} style={styles.head} textStyle={styles.headText}/>
+          </Table>
+          <ScrollView style={styles.dataWrapper}>
+            <Table borderStyle={{borderWidth: 1, borderColor: '#868686'}}>
+              {
+                lisData.lis.map((item, index) => (
+                  <React.Fragment>
+                    <Row
+                      key={"_HEADER_" + index}
+                      data={[item.testtypeName]}
+                      style={styles.testNameWrapper}
+                      textStyle={styles.testNameText}
+                    />
+                    
+                    {item.childrens.map((rowData, rowIndex) => {
+                      const mode = RangeValues(rowData);
+                      return(
+                        <TableWrapper key={"_ROW_" + rowIndex} style={styles.row}>
+                          {
+                            rowData.map((cellData, cellIndex) => {
+                              return(
+                                <Cell key={"_CELL_" + cellIndex} data={cellData} textStyle={{...styles.text, color: (cellIndex === 1 && mode === 'H') ? 'red' : (cellIndex === 1 && mode === 'L') ? 'blue' : 'black'}} style={{borderWidth: 1, borderColor: 'black', width: _TABLE_HEADER.widthArr[cellIndex]}}/>
+                              );
+                            })
+                          }
+                        </TableWrapper>
+                      )
+                    })}
+                  </React.Fragment>
+                ))
+              }
+            </Table>
+          </ScrollView>
+        </View>
       </ScrollView>
     </View>
   )

@@ -2,7 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useContext } from "react";
-import { Dimensions, ScrollView, Text, TouchableHighlight, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableHighlight, TouchableOpacity, View } from "react-native";
 import { DETAILS, DETALLS } from "../ApiUrl";
 import { AxiosHelper } from "../AxiosHelper";
 import { TokenContext } from "../GlobalContext";
@@ -12,6 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { CHANGE_PASSWORD_SCREEN, DETAIL_SCREEN, LOGIN_SCREEN } from "../Constant";
 import { StyledComponents } from "../LoginScreen";
 import { ClearToken } from "../SqlLiteHelper";
+import { Table, Row } from 'react-native-table-component';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ResultWrapper = styled(View)`
   padding: 20px;
@@ -49,6 +51,11 @@ const InfoContent = styled(Text)`
   padding-left: 10px;
 `;
 
+const _TABLE_HEADER = {
+  item: ['Họ và tên', 'Ngày khám', 'Mã khám', 'Đơn vị chỉ định', 'Bác sĩ chuẩn đoán', 'Đối tượng'],
+  widthArr: [150, 150, 100, 150, 150, 150]
+};
+
 export type PatientData = {
   barcode: string | null;
   branchCode: string | null;
@@ -77,10 +84,20 @@ export type PatientData = {
   smsSent: number
 }
 
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff' },
+  head: { backgroundColor: '#ffffff' },
+  text: { margin: 6, color: '#000' },
+  dataWrapper: { marginTop: -1 },
+  row: { height: 40, backgroundColor: '#E7E6E1' }
+});
+
 const ResultScreen: React.FC = () => {
   const { width, height }         = Dimensions.get("window");
   const { authorized, setToken }  = useContext(TokenContext);
-  const [result, setResult]       = useState([]);
+  const [result, setResult]       = useState<any[][]>([]);
+  const [rawData, setRaw]         = useState([]);
+  const [showMenu, setShow]       = useState(false);
   const navigation                = useNavigation();
 
   useEffect(() => {
@@ -91,12 +108,21 @@ const ResultScreen: React.FC = () => {
     })
       .then(r => {
         const responseData = r.data.data;
-        setResult(responseData.tests);
+        setRaw(responseData)
+        let _result = [];
+        for (const _item of responseData.tests) {
+          _result.push([_item.patientName, moment(_item.inputDate).format("DD/MM/YYYY HH:mm:ss"), _item.patientCode, _item.departmentName, _item.doctorassignName, _item.objecttypeName]);
+        }
+        setResult(_result);
       })
       .catch(e => {
-        console.error("RESULT:", e.message);
+        __DEV__ ? console.error("RESULT:", e.message) : undefined;
       })
   }, []);
+
+  const TriggerMenu = () => {
+    setShow(!showMenu);
+  }
 
   const Logout = () => {
     ClearToken()
@@ -123,95 +149,107 @@ const ResultScreen: React.FC = () => {
 
   return(
     <ResultWrapper height={height}>
+      <View style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: 20}}>
+        <TouchableHighlight
+          style={{marginTop: 5, flexDirection:'row', flexWrap:'wrap'}}
+          activeOpacity={0.6}
+          underlayColor="#ffffff"
+          onPress={TriggerMenu}
+        >
+          <View style={{
+            backgroundColor: '#39f',
+            padding: 5,
+            paddingLeft: 10,
+            paddingRight: 10,
+            borderRadius: 5,
+            display: 'flex',
+            flexDirection: 'row'
+          }}>
+            <Icon name="account" size={20} color="#ffffff" />
+            <Text style={{
+              marginLeft: 5,
+              color: 'white',
+              fontSize: 15,
+              textAlign: 'center'
+            }}>{authorized.fullname}</Text>
+          </View>
+        </TouchableHighlight>
+        {showMenu && (
+          <View style={{
+            position: 'absolute',
+            padding: 10,
+            right: 5,
+            top: 40,
+            backgroundColor: '#dddddd',
+            borderRadius: 5,
+            zIndex: 99999
+          }}>
+            <TouchableHighlight
+              activeOpacity={0.6}
+              underlayColor="#ffffff"
+              onPress={Go2ChangePassword}
+            >
+              <View style={{
+                backgroundColor: '#00bd9d',
+                padding: 5,
+                paddingLeft: 10,
+                paddingRight: 10,
+                borderRadius: 5
+              }}>
+                <Text style={{
+                  color: 'white',
+                  fontSize: 15,
+                  textAlign: 'center'
+                }}>Đổi mật khẩu</Text>
+              </View>
+            </TouchableHighlight>
+            <TouchableHighlight
+              style={{marginTop: 5}}
+              activeOpacity={0.6}
+              underlayColor="#ffffff"
+              onPress={Logout}
+            >
+              <View style={{
+                backgroundColor: '#00bd9d',
+                padding: 5,
+                paddingLeft: 10,
+                paddingRight: 10,
+                borderRadius: 5
+              }}>
+                <Text style={{
+                  color: 'white',
+                  fontSize: 15,
+                  textAlign: 'center'
+                }}>Đăng xuất</Text>
+              </View>
+            </TouchableHighlight>
+          </View>
+        )}
+      </View>
       <ResultHeader>Kết quả xét nghiệm bệnh nhân</ResultHeader>
-      <ScrollView style={{height: '100%', width: '100%', flex: 1}}>
-        <View style={{marginTop: 20}}>
-          {result.map((item: PatientData, index: number) => {
-            return(
-              <InfoContainer key={index}>
-                <InfoWrapper>
-                  <InfoHeader>Tên bệnh nhân:</InfoHeader>
-                  <InfoContent>{item.patientName ? item.patientName : '<Không có thông tin>'}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <InfoHeader>Ngày khám:</InfoHeader>
-                  <InfoContent>{moment(item.inputDate).format("DD/MM/YYYY HH:mm:ss")}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <InfoHeader>Mã khám:</InfoHeader>
-                  <InfoContent>{item.patientCode ? item.patientCode : '<Không có thông tin>'}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <InfoHeader>Đơn vị chỉ định:</InfoHeader>
-                  <InfoContent>{item.departmentName ? item.departmentName : '<Không có thông tin>'}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <InfoHeader>Bác sỹ chuẩn đoán:</InfoHeader>
-                  <InfoContent>{item.doctorassignName ? item.doctorassignName : '<Không có thông tin>'}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <InfoHeader>Đối tượng:</InfoHeader>
-                  <InfoContent>{item.objecttypeName ? item.objecttypeName : '<Không có thông tin>'}</InfoContent>
-                </InfoWrapper>
-                <InfoWrapper>
-                  <TouchableHighlight
-                    activeOpacity={0.6}
-                    underlayColor="#ffffff"
-                    onPress={_ => GetDetail(item.patientInfoId)}
-                  >
-                    <View style={{
-                      backgroundColor: '#0474b4',
-                      padding: 12,
-                      borderRadius: 10
-                    }}>
-                      <Text style={{
-                        color: 'white',
-                        fontSize: 15,
-                        textAlign: 'center'
-                      }}>Chi tiết</Text>
-                    </View>
-                  </TouchableHighlight>
-                </InfoWrapper>
-              </InfoContainer>
-            )
-          })}
+      <ScrollView style={{height: '100%', width: '100%', flex: 1}} horizontal>
+        <View>
+          <Table borderStyle={{borderWidth: 1, borderColor: '#868686'}}>
+            <Row data={_TABLE_HEADER.item} widthArr={_TABLE_HEADER.widthArr} style={styles.head} textStyle={styles.text}/>
+          </Table>
+          <ScrollView style={styles.dataWrapper}>
+            <Table borderStyle={{borderWidth: 1, borderColor: '#868686'}}>
+              {
+                result.map((item, index) => (
+                  <Row
+                    onPress={() => GetDetail(rawData.tests[index].patientInfoId)}
+                    key={index}
+                    data={item}
+                    widthArr={_TABLE_HEADER.widthArr}
+                    style={{...styles.row, backgroundColor: index%2 ? '#ffffff' : undefined}}
+                    textStyle={styles.text}
+                  />
+                ))
+              }
+            </Table>
+          </ScrollView>
         </View>
       </ScrollView>
-      <TouchableHighlight
-        activeOpacity={0.6}
-        underlayColor="#ffffff"
-        onPress={Go2ChangePassword}
-      >
-        <View style={{
-          backgroundColor: '#00bd9d',
-          padding: 12,
-          borderRadius: 10
-        }}>
-          <Text style={{
-            color: 'white',
-            fontSize: 15,
-            textAlign: 'center'
-          }}>Đổi mật khẩu</Text>
-        </View>
-      </TouchableHighlight>
-      <TouchableHighlight
-        style={{marginTop: 5}}
-        activeOpacity={0.6}
-        underlayColor="#ffffff"
-        onPress={Logout}
-      >
-        <View style={{
-          backgroundColor: '#af0075',
-          padding: 12,
-          borderRadius: 10
-        }}>
-          <Text style={{
-            color: 'white',
-            fontSize: 15,
-            textAlign: 'center'
-          }}>Đăng xuất</Text>
-        </View>
-      </TouchableHighlight>
     </ResultWrapper>
   )
 }
